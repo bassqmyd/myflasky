@@ -8,6 +8,7 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate, MigrateCommand
+from flask_mail import Mail, Message
 import os
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -16,6 +17,18 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'da
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'hard to guess string'
+app.config['MAIL_SERVER'] = 'smtp.qq.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = '945581235@qq.com'  # os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = 'kuzxwuwiijtabcba'  # os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = '945581235@qq.com'
+app.config['FLASKY_MAIL_SUBJECT_PREFIX'] = '[Flasky]'
+app.config['FLASKY_MAIL_SENDER'] = '945581235@qq.com'
+app.config['FLASKY_ADMIN'] = '945581235@qq.com'
+
+
+print(os.path.dirname(__file__))
 
 manager = Manager(app)
 bootstrap = Bootstrap(app)
@@ -23,11 +36,22 @@ moment = Moment(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 manager.add_command('db', MigrateCommand)
+mail = Mail(app)
 
 
 class NameForm(FlaskForm):
     name = StringField('what is your name?', validators=[DataRequired()])
     submit = SubmitField('submit')
+
+
+def send_email(to, subject, template, **kwargs):
+    msg = Message(app.config['FLASKY_MAIL_SUBJECT_PREFIX'] + subject,
+                  sender=app.config['FLASKY_MAIL_SENDER'],
+                  recipients=[to])
+    msg.body = render_template(template + '.txt', **kwargs)
+    msg.html = render_template(template + '.html', **kwargs)
+    with app.app_context():
+        mail.send(msg)
 
 
 @app.route('/', methods=['get', 'post'])
@@ -40,6 +64,9 @@ def index():
             user = User(username=form.name.data)
             db.session.add(user)  # 为什么这里没有commit，也可以写到数据库中
             session['known'] = False
+            if app.config['FLASKY_ADMIN']:
+                send_email(app.config['FLASKY_ADMIN'], 'New user',
+                           'mail/new_user', user=user)  # 相当于发邮件给我，告诉我有新数据
         else:
             session['known'] = True
         session['name'] = form.name.data
@@ -89,6 +116,7 @@ def make_shell_context():
     return dict(app=app, db=db, User=User, Role=Role)
 manager.add_command('shell', Shell(make_context=make_shell_context))
 manager.add_command('db', MigrateCommand)
+
 
 if __name__ == '__main__':
     manager.run()
