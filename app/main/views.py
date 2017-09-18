@@ -4,6 +4,7 @@ from ..models import User
 from ..email import send_email
 from . import main
 from .forms import NameForm
+from datetime import datetime
 
 
 @main.route('/', methods=['get', 'post'])
@@ -25,4 +26,5 @@ def index():
     return render_template('index.html',
                            form=form,
                            name=session.get('name'),
-                           known=session.get('known', False))
+                           known=session.get('known', False),
+                           current_time=datetime.utcnow())
