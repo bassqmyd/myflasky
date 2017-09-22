@@ -40,3 +40,20 @@ class ChangePasswordForm(FlaskForm):
                                          EqualTo('password2', message='passwords must match')])
     password2 = PasswordField('confirm new password', validators=[DataRequired()])
     submit = SubmitField('Update Password')
+
+
+class PasswordResetRequestForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
+    submit = SubmitField('Reset Password')
+
+
+class PasswordResetForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
+    password = PasswordField('New Password', validators=[DataRequired(),
+                                                         EqualTo('password2', message='Password must match')])
+    password2 = PasswordField('confirm password', validators=[DataRequired()])
+    submit = SubmitField('reset Password')
+
+    def validate_email(self, field):
+        if User.query.filter_by(email=field.data).first() is None:
+            raise ValidationError('Unknown email address.')
