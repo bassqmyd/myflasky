@@ -2,6 +2,7 @@ import unittest
 from app.models import User, AnonymousUser, Role, Permission
 import time
 from app import create_app, db
+from datetime import datetime
 
 
 class UserModelTestCase(unittest.TestCase):
@@ -114,3 +115,21 @@ class UserModelTestCase(unittest.TestCase):
     def test_anonymous_user(self):
         u = AnonymousUser()  # 不管是什么，这个实例的方法，返回的都是False
         self.assertFalse(u.can(Permission.FOLLOW))
+
+    def test_timestamps(self):
+        u = User(password='cat')
+        db.session.add(u)
+        db.session.commit()
+        self.assertTrue(
+            (datetime.utcnow() - u.member_since).total_seconds() < 3)
+        self.assertTrue(
+            (datetime.utcnow() - u.last_seen).total_seconds() < 3)
+
+    def test_ping(self):
+        u = User(password='cat')
+        db.session.add(u)
+        db.session.commit()
+        time.sleep(2)
+        last_seen_before = u.last_seen
+        u.ping()
+        self.assertTrue(u.last_seen > last_seen_before)

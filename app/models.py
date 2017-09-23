@@ -4,14 +4,15 @@ from flask_login import UserMixin, AnonymousUserMixin
 from . import login_manager
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
+from datetime import datetime
 
 
 class Permission:
-    FOLLOW = 0x01
-    COMMENT = 0x02
-    WRITE_ARTICLES = 0x04
-    MODERATE_COMMENTS = 0x08
-    ADMINISTER = 0x80
+    FOLLOW = 0x01  # 关注其他用户
+    COMMENT = 0x02  # 在他人的文章中发表评论
+    WRITE_ARTICLES = 0x04  # 写原创文章
+    MODERATE_COMMENTS = 0x08  # 管理他人发表的评论
+    ADMINISTER = 0x80  # 管理网站
 
 
 class Role(db.Model):
@@ -49,6 +50,11 @@ class User(UserMixin, db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     password_hash = db.Column(db.String(128))
     confirmed = db.Column(db.Boolean, default=False)
+    name = db.Column(db.String(64))  # 真实姓名
+    location = db.Column(db.String(64))  # 所在地
+    about_me = db.Column(db.Text())  # 自我介绍，Text不需要指定最大长度
+    member_since = db.Column(db.DateTime(), default=datetime.utcnow)  # 注册日期
+    last_seen = db.Column(db.DateTime(), default=datetime.utcnow)  # 最后访问日期
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -117,6 +123,10 @@ class User(UserMixin, db.Model):
 
     def is_administrator(self):
         return self.can(Permission.ADMINISTER)
+
+    def ping(self):
+        self.last_seen = datetime.utcnow()
+        db.session.add(self)
 
     @property
     def password(self):
