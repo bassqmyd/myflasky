@@ -5,6 +5,7 @@ from wtforms import ValidationError
 from ..models import User
 
 
+# ##################### 登录 ########################
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
@@ -12,6 +13,7 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Log In')
 
 
+# ##################### 注册 ########################
 class RegistrationForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
     username = StringField('Username',
@@ -33,6 +35,7 @@ class RegistrationForm(FlaskForm):
             raise ValidationError('Username already in use.')
 
 
+# ##################### 修改密码 ########################
 class ChangePasswordForm(FlaskForm):
     old_password = PasswordField('old password', validators=[DataRequired()])
     password = PasswordField('new password',
@@ -42,11 +45,13 @@ class ChangePasswordForm(FlaskForm):
     submit = SubmitField('Update Password')
 
 
+# ##################### 重设密码请求 ########################
 class PasswordResetRequestForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
     submit = SubmitField('Reset Password')
 
 
+# ##################### 重设密码 ########################
 class PasswordResetForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Length(1, 64), Email()])
     password = PasswordField('New Password', validators=[DataRequired(),
@@ -59,6 +64,7 @@ class PasswordResetForm(FlaskForm):
             raise ValidationError('Unknown email address.')
 
 
+# ##################### 修改邮箱 ########################
 class ChangeEmailForm(FlaskForm):
     email = StringField('New Email', validators=[DataRequired(), Length(1, 64), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
