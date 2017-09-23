@@ -13,7 +13,7 @@ class UserModelTestCase(unittest.TestCase):
 
     def tearDown(self):
         db.session.remove()
-        # db.drop_all()
+        db.drop_all()
         self.app_context.pop()
 
     def test_password_setter(self):
@@ -76,3 +76,31 @@ class UserModelTestCase(unittest.TestCase):
         token = u1.generate_reset_token()
         self.assertFalse(u2.reset_password(token, 'horse'))
         self.assertTrue(u2.verify_password('dog'))
+
+    def test_valid_email_change_token(self):
+        u = User(email='john@example.com', password='cat')
+        db.session.add(u)
+        db.session.commit()
+        token = u.generate_email_change_token(new_email='susan@example.org')
+        self.assertTrue(u.change_email(token))
+        self.assertTrue(u.email == 'susan@example.org')
+
+    def test_invalid_email_change_token(self):
+        u1 = User(email='john@example.com', password='cat')
+        u2 = User(email='susan@example.org', password='dog')
+        db.session.add(u1)
+        db.session.add(u2)
+        db.session.commit()
+        token = u1.generate_email_change_token(new_email='david@example.net')
+        self.assertFalse(u2.change_email(token))
+        self.assertTrue(u2.email == 'susan@example.org')
+
+    def test_duplicate_email_change_token(self):
+        u1 = User(email='john@example.com', password='cat')
+        u2 = User(email='susan@example.org', password='dog')
+        db.session.add(u1)
+        db.session.add(u2)
+        db.session.commit()
+        token = u2.generate_email_change_token(new_email='john@example.com')
+        self.assertFalse(u2.change_email(token))
+        self.assertTrue(u2.email == 'susan@example.org')
